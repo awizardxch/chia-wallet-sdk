@@ -100,12 +100,7 @@ impl PeerSimulator {
     pub async fn connect_raw(&self) -> Result<(Peer, mpsc::Receiver<Message>), PeerSimulatorError> {
         tracing::info!("connecting new peer to simulator");
         let (ws, _) = connect_async(format!("ws://{}", self.addr)).await?;
-        Ok(Peer::from_websocket(
-            ws,
-            PeerOptions {
-                rate_limit_factor: 0.6,
-            },
-        )?)
+        Ok(Peer::from_websocket(ws, PeerOptions::default())?)
     }
 
     pub async fn connect_split(
@@ -418,6 +413,51 @@ mod tests {
 
             coin = Coin::new(coin.coin_id(), puzzle_hash, coin.amount - 1);
         }
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_undrained_events() -> anyhow::Result<()> {
+        let sim = PeerSimulator::new().await?;
+
+        // Every transaction sends a new peak, which is never read here.
+        let (peer, mut receiver) = sim.connect_split().await?;
+
+        let (puzzle_hash, puzzle_reveal) = to_puzzle(1)?;
+
+        let mut coin = sim.lock().await.new_coin(puzzle_hash, 1000);
+
+        for _ in 0..100 {
+            let spend_bundle = SpendBundle::new(
+                vec![CoinSpend::new(
+                    coin,
+                    puzzle_reveal.clone(),
+                    to_program([CreateCoin::<NodePtr>::new(
+                        puzzle_hash,
+                        coin.amount - 1,
+                        Memos::None,
+                    )])?,
+                )],
+                Signature::default(),
+            );
+
+            let ack = tokio::time::timeout(
+                std::time::Duration::from_secs(10),
+                peer.send_transaction(spend_bundle),
+            )
+            .await
+            .expect("the response was blocked by undrained events")?;
+            assert_eq!(ack.status, 1);
+
+            coin = Coin::new(coin.coin_id(), puzzle_hash, coin.amount - 1);
+        }
+
+        let mut events = 0;
+        while receiver.try_recv().is_ok() {
+            events += 1;
+        }
+        assert_eq!(events, chia_sdk_client::MESSAGE_BUFFER_SIZE);
 
         Ok(())
     }

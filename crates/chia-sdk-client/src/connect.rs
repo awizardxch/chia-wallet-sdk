@@ -31,7 +31,15 @@ pub async fn connect_peer(
     })
     .await?;
 
-    let Some(message) = receiver.recv().await else {
+    let message = if let Some(timeout) = peer.request_timeout() {
+        tokio::time::timeout(timeout, receiver.recv())
+            .await
+            .map_err(|_| ClientError::Timeout(timeout))?
+    } else {
+        receiver.recv().await
+    };
+
+    let Some(message) = message else {
         return Err(ClientError::MissingHandshake);
     };
 

@@ -1,3 +1,5 @@
+use std::time::Duration;
+
 use chia_protocol::{NodeType, ProtocolMessageTypes};
 use thiserror::Error;
 use tokio::sync::oneshot::error::RecvError;
@@ -44,6 +46,12 @@ pub enum ClientError {
 
     #[error("Failed to receive message")]
     Recv(#[from] RecvError),
+
+    #[error("Timed out after {0:?} waiting for a response")]
+    Timeout(Duration),
+
+    #[error("The connection is closed")]
+    ConnectionClosed,
 
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
