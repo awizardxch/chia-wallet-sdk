@@ -1,9 +1,10 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 
 use bindy::Result;
 use chia_protocol::{
-    Bytes32, CoinStateUpdate, Message, NewPeakWallet, ProtocolMessageTypes, PuzzleSolutionResponse,
-    RespondCoinState, RespondPuzzleState,
+    Bytes32, CoinState, CoinStateUpdate, HeaderBlock, Message, NewPeakWallet, ProtocolMessageTypes,
+    PuzzleSolutionResponse, RespondBlockHeaders, RespondCoinState, RespondPuzzleState, SpendBundle,
+    TransactionAck,
 };
 use chia_sdk_client::{
     Connector as SdkConnector, Peer as SdkPeer, PeerOptions as SdkPeerOptions, connect_peer,
@@ -53,6 +54,7 @@ impl Connector {
 #[derive(Clone)]
 pub struct PeerOptions {
     pub rate_limit_factor: f64,
+    pub request_timeout_ms: Option<u32>,
 }
 
 impl PeerOptions {
@@ -60,7 +62,21 @@ impl PeerOptions {
         let options = SdkPeerOptions::default();
         Ok(Self {
             rate_limit_factor: options.rate_limit_factor,
+            request_timeout_ms: options
+                .request_timeout
+                .map(|timeout| timeout.as_millis().try_into().unwrap_or(u32::MAX)),
         })
+    }
+}
+
+impl From<PeerOptions> for SdkPeerOptions {
+    fn from(value: PeerOptions) -> Self {
+        Self {
+            rate_limit_factor: value.rate_limit_factor,
+            request_timeout: value
+                .request_timeout_ms
+                .map(|ms| Duration::from_millis(ms.into())),
+        }
     }
 }
 
@@ -97,9 +113,7 @@ impl Peer {
             network_id,
             connector.0.clone(),
             socket_addr.parse()?,
-            SdkPeerOptions {
-                rate_limit_factor: options.rate_limit_factor,
-            },
+            options.into(),
         )
         .await?;
 
@@ -150,6 +164,33 @@ impl Peer {
             .map_err(bindy::Error::RejectPuzzleSolution)
     }
 
+    pub async fn request_children(&self, coin_id: Bytes32) -> Result<Vec<CoinState>> {
+        Ok(self.0.request_children(coin_id).await?.coin_states)
+    }
+
+    pub async fn request_block_header(&self, height: u32) -> Result<HeaderBlock> {
+        self.0
+            .request_block_header(height)
+            .await?
+            .map_err(bindy::Error::RejectHeaderRequest)
+    }
+
+    pub async fn request_block_headers(
+        &self,
+        start_height: u32,
+        end_height: u32,
+        return_filter: bool,
+    ) -> Result<RespondBlockHeaders> {
+        self.0
+            .request_block_headers(start_height, end_height, return_filter)
+            .await?
+            .map_err(bindy::Error::RejectBlockHeaders)
+    }
+
+    pub async fn send_transaction(&self, spend_bundle: SpendBundle) -> Result<TransactionAck> {
+        Ok(self.0.send_transaction(spend_bundle).await?)
+    }
+
     pub async fn remove_coin_subscriptions(
         &self,
         coin_ids: Option<Vec<Bytes32>>,
@@ -190,6 +231,10 @@ impl Peer {
         }
 
         Ok(None)
+    }
+
+    pub async fn close(&self) -> Result<()> {
+        Ok(self.0.close().await?)
     }
 }
 

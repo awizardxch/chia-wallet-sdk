@@ -8,10 +8,12 @@ from chia_wallet_sdk import (
     MipsMemo,
     MipsMemoContext,
     MofNMemo,
+    PeerOptions,
     PublicKey,
     RestrictionMemo,
     Reveals,
     RunCatTail,
+    TransactionAck,
     WrapperMemo,
     calculate_vault_coin_message,
     calculate_vault_puzzle_message,
@@ -195,3 +197,17 @@ def test_clear_signing_vault_transaction():
         calculate_vault_coin_message(delegated_puzzle_hash, coin_id, genesis_challenge)
         == delegated_puzzle_hash + coin_id + genesis_challenge
     )
+
+
+def test_peer_options():
+    options = PeerOptions()
+    assert options.request_timeout_ms == 60_000
+
+    options.request_timeout_ms = None
+    assert options.request_timeout_ms is None
+
+
+def test_transaction_ack():
+    ack = TransactionAck(bytes(32), 3, "DOUBLE_SPEND")
+    assert ack.status == 3
+    assert ack.error == "DOUBLE_SPEND"

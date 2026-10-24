@@ -19,7 +19,10 @@ pub use pyo3_impls::*;
 
 use std::{net::AddrParseError, string::FromUtf8Error};
 
-use chia_protocol::{RejectCoinState, RejectPuzzleSolution, RejectPuzzleState};
+use chia_protocol::{
+    RejectBlockHeaders, RejectCoinState, RejectHeaderRequest, RejectPuzzleSolution,
+    RejectPuzzleState,
+};
 use chia_sdk_driver::DriverError;
 use chia_sdk_test::SimulatorError;
 use chia_sdk_utils::Bech32Error;
@@ -67,6 +70,12 @@ pub enum Error {
 
     #[error("Reject puzzle solution: {0:?}")]
     RejectPuzzleSolution(RejectPuzzleSolution),
+
+    #[error("Reject header request: {0:?}")]
+    RejectHeaderRequest(RejectHeaderRequest),
+
+    #[error("Reject block headers: {0:?}")]
+    RejectBlockHeaders(RejectBlockHeaders),
 
     #[cfg(any(feature = "napi", feature = "pyo3"))]
     #[error("SSL error: {0}")]

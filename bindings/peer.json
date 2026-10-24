@@ -36,7 +36,8 @@
     "type": "class",
     "no_wasm": true,
     "fields": {
-      "rate_limit_factor": "f64"
+      "rate_limit_factor": "f64",
+      "request_timeout_ms": "Option<u32>"
     },
     "methods": {
       "new": {
@@ -87,6 +88,36 @@
         },
         "return": "PuzzleSolutionResponse"
       },
+      "request_children": {
+        "type": "async",
+        "args": {
+          "coin_id": "Bytes32"
+        },
+        "return": "Vec<CoinState>"
+      },
+      "request_block_header": {
+        "type": "async",
+        "args": {
+          "height": "u32"
+        },
+        "return": "HeaderBlock"
+      },
+      "request_block_headers": {
+        "type": "async",
+        "args": {
+          "start_height": "u32",
+          "end_height": "u32",
+          "return_filter": "bool"
+        },
+        "return": "RespondBlockHeaders"
+      },
+      "send_transaction": {
+        "type": "async",
+        "args": {
+          "spend_bundle": "SpendBundle"
+        },
+        "return": "TransactionAck"
+      },
       "remove_coin_subscriptions": {
         "type": "async",
         "args": {
@@ -104,6 +135,9 @@
       "next": {
         "type": "async",
         "return": "Option<Event>"
+      },
+      "close": {
+        "type": "async"
       }
     }
   },
@@ -172,6 +206,47 @@
       "height": "u32",
       "puzzle": "SerializedProgram",
       "solution": "SerializedProgram"
+    }
+  },
+  "RespondBlockHeaders": {
+    "type": "class",
+    "no_wasm": true,
+    "remote": true,
+    "new": true,
+    "fields": {
+      "start_height": "u32",
+      "end_height": "u32",
+      "header_blocks": "Vec<HeaderBlock>"
+    }
+  },
+  "HeaderBlock": {
+    "type": "class",
+    "no_wasm": true,
+    "remote": true,
+    "new": true,
+    "fields": {
+      "finished_sub_slots": "Vec<EndOfSubSlotBundle>",
+      "reward_chain_block": "RewardChainBlock",
+      "challenge_chain_sp_proof": "Option<VDFProof>",
+      "challenge_chain_ip_proof": "VDFProof",
+      "reward_chain_sp_proof": "Option<VDFProof>",
+      "reward_chain_ip_proof": "VDFProof",
+      "infused_challenge_chain_ip_proof": "Option<VDFProof>",
+      "foliage": "Foliage",
+      "foliage_transaction_block": "Option<FoliageTransactionBlock>",
+      "transactions_filter": "Bytes",
+      "transactions_info": "Option<TransactionsInfo>"
+    }
+  },
+  "TransactionAck": {
+    "type": "class",
+    "no_wasm": true,
+    "remote": true,
+    "new": true,
+    "fields": {
+      "txid": "Bytes32",
+      "status": "u8",
+      "error": "Option<String>"
     }
   },
   "CoinStateFilters": {
