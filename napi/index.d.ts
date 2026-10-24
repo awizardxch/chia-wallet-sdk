@@ -1925,6 +1925,33 @@ export declare class HandleNftMetadata {
   set licenseHash(value: Uint8Array | undefined | null)
 }
 
+export declare class HeaderBlock {
+  clone(): HeaderBlock
+  constructor(finishedSubSlots: Array<EndOfSubSlotBundle>, rewardChainBlock: RewardChainBlock, challengeChainSpProof: VDFProof | undefined | null, challengeChainIpProof: VDFProof, rewardChainSpProof: VDFProof | undefined | null, rewardChainIpProof: VDFProof, infusedChallengeChainIpProof: VDFProof | undefined | null, foliage: Foliage, foliageTransactionBlock: FoliageTransactionBlock | undefined | null, transactionsFilter: Uint8Array, transactionsInfo?: TransactionsInfo | undefined | null)
+  get finishedSubSlots(): Array<EndOfSubSlotBundle>
+  set finishedSubSlots(value: Array<EndOfSubSlotBundle>)
+  get rewardChainBlock(): RewardChainBlock
+  set rewardChainBlock(value: RewardChainBlock)
+  get challengeChainSpProof(): VDFProof | null
+  set challengeChainSpProof(value: VDFProof | undefined | null)
+  get challengeChainIpProof(): VDFProof
+  set challengeChainIpProof(value: VDFProof)
+  get rewardChainSpProof(): VDFProof | null
+  set rewardChainSpProof(value: VDFProof | undefined | null)
+  get rewardChainIpProof(): VDFProof
+  set rewardChainIpProof(value: VDFProof)
+  get infusedChallengeChainIpProof(): VDFProof | null
+  set infusedChallengeChainIpProof(value: VDFProof | undefined | null)
+  get foliage(): Foliage
+  set foliage(value: Foliage)
+  get foliageTransactionBlock(): FoliageTransactionBlock | null
+  set foliageTransactionBlock(value: FoliageTransactionBlock | undefined | null)
+  get transactionsFilter(): Buffer
+  set transactionsFilter(value: Uint8Array)
+  get transactionsInfo(): TransactionsInfo | null
+  set transactionsInfo(value: TransactionsInfo | undefined | null)
+}
+
 export declare class Id {
   clone(): Id
   static xch(): Id
@@ -2813,9 +2840,14 @@ export declare class Peer {
   requestCoinState(coinIds: Array<Uint8Array>, previousHeight: number | undefined | null, headerHash: Uint8Array, subscribe: boolean): Promise<RespondCoinState>
   requestPuzzleState(puzzleHashes: Array<Uint8Array>, previousHeight: number | undefined | null, headerHash: Uint8Array, filters: CoinStateFilters, subscribe: boolean): Promise<RespondPuzzleState>
   requestPuzzleAndSolution(coinId: Uint8Array, height: number): Promise<PuzzleSolutionResponse>
+  requestChildren(coinId: Uint8Array): Promise<Array<CoinState>>
+  requestBlockHeader(height: number): Promise<HeaderBlock>
+  requestBlockHeaders(startHeight: number, endHeight: number, returnFilter: boolean): Promise<RespondBlockHeaders>
+  sendTransaction(spendBundle: SpendBundle): Promise<TransactionAck>
   removeCoinSubscriptions(coinIds?: Array<Uint8Array> | undefined | null): Promise<Array<Buffer>>
   removePuzzleSubscriptions(puzzleHashes?: Array<Uint8Array> | undefined | null): Promise<Array<Buffer>>
   next(): Promise<Event | null>
+  close(): Promise<void>
 }
 
 export declare class PeerOptions {
@@ -2823,6 +2855,8 @@ export declare class PeerOptions {
   constructor()
   get rateLimitFactor(): number
   set rateLimitFactor(value: number)
+  get requestTimeoutMs(): number | null
+  set requestTimeoutMs(value: number | undefined | null)
 }
 
 export declare class PendingSpend {
@@ -3120,6 +3154,17 @@ export declare class ReserveFee {
   constructor(amount: bigint)
   get amount(): bigint
   set amount(value: bigint)
+}
+
+export declare class RespondBlockHeaders {
+  clone(): RespondBlockHeaders
+  constructor(startHeight: number, endHeight: number, headerBlocks: Array<HeaderBlock>)
+  get startHeight(): number
+  set startHeight(value: number)
+  get endHeight(): number
+  set endHeight(value: number)
+  get headerBlocks(): Array<HeaderBlock>
+  set headerBlocks(value: Array<HeaderBlock>)
 }
 
 export declare class RespondCoinState {
@@ -4011,6 +4056,17 @@ export declare class TradePrice {
   set amount(value: bigint)
   get puzzleHash(): Buffer
   set puzzleHash(value: Uint8Array)
+}
+
+export declare class TransactionAck {
+  clone(): TransactionAck
+  constructor(txid: Uint8Array, status: number, error?: string | undefined | null)
+  get txid(): Buffer
+  set txid(value: Uint8Array)
+  get status(): number
+  set status(value: number)
+  get error(): string | null
+  set error(value: string | undefined | null)
 }
 
 export declare class TransactionsInfo {

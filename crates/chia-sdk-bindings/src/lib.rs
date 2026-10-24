@@ -117,7 +117,8 @@ pub use chia_sdk_types::{
 
 #[cfg(any(feature = "napi", feature = "pyo3"))]
 pub use chia_protocol::{
-    CoinStateUpdate, NewPeakWallet, PuzzleSolutionResponse, RespondCoinState, RespondPuzzleState,
+    CoinStateUpdate, HeaderBlock, NewPeakWallet, PuzzleSolutionResponse, RespondBlockHeaders,
+    RespondCoinState, RespondPuzzleState, TransactionAck,
 };
 
 pub(crate) use convert::{AsProgram, AsPtr};
